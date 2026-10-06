@@ -366,3 +366,69 @@ h3 {
   font-size: 11px;
   color: var(--text-muted);
 }
+
+/* Flagship Binding Inspector Styles */
+.binding-card {
+  background: #1e1e2e;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.binding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 6px;
+}
+
+.binding-prop-name {
+  font-weight: bold;
+  color: var(--accent-color);
+  font-size: 13px;
+}
+
+.btn-why-empty {
+  background: var(--warning-color);
+  color: #11111b;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.btn-why-empty:hover {
+  opacity: 0.9;
+}
+
+.chain-walker {
+  margin-top: 12px;
+  background: #11111b;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.chain-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--border-color);
+}
+
+.chain-node.pass {
+  color: var(--success-color);
+}
+.chain-node.fail {
+  color: var(--error-color);
+}
+.chain-node.error {
+  color: var(--error-color);
+  font-weight: bold;
+}

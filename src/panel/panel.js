@@ -2,6 +2,7 @@ import { UI5Hook } from "../backend/ui5-hook.js";
 import { ModelInspector } from "../backend/model-inspector.js";
 import { AIDebugger } from "../ai/ai-debugger.js";
 import { ODataInspector } from "../backend/odata-inspector.js";
+import { BindingInspector } from "../backend/binding-inspector.js";
 
 class PanelUI {
   constructor() {
@@ -9,6 +10,7 @@ class PanelUI {
     this.localInspector = new ModelInspector(this.localHook);
     this.localAiDebugger = new AIDebugger(this.localInspector);
     this.localODataInspector = new ODataInspector(this.localHook);
+    this.localBindingInspector = new BindingInspector(this.localHook);
 
     this.selectedControlId = null;
     this.selectedRequestId = null;
@@ -144,10 +146,11 @@ class PanelUI {
     if (this.isDevToolsEnv()) {
       const expr = `
         (function() {
-          if (window.__DEVFRAME_INSPECTOR__ && window.__DEVFRAME_AI__) {
+          if (window.__DEVFRAME_INSPECTOR__ && window.__DEVFRAME_AI__ && window.__DEVFRAME_BINDINGS__) {
             var details = window.__DEVFRAME_INSPECTOR__.inspectControlDetails(${JSON.stringify(controlId)});
             var analysis = window.__DEVFRAME_AI__.analyzeControl(details);
-            return { details: details, analysis: analysis };
+            var bindings = window.__DEVFRAME_BINDINGS__.inspectBindings(${JSON.stringify(controlId)});
+            return { details: details, analysis: analysis, bindings: bindings };
           }
           return null;
         })()
@@ -157,6 +160,7 @@ class PanelUI {
           this.renderInspectorTab(res.details);
           this.renderModelsTab(res.details);
           this.renderAITab(res.analysis);
+          this.renderBindingsTab(res.bindings);
         } else {
           this.inspectLocalControl(controlId);
         }
@@ -169,10 +173,12 @@ class PanelUI {
   inspectLocalControl(controlId) {
     const details = this.localInspector.inspectControlDetails(controlId);
     const aiAnalysis = this.localAiDebugger.analyzeControl(details);
+    const bindings = this.localBindingInspector.inspectBindings(controlId);
 
     this.renderInspectorTab(details);
     this.renderModelsTab(details);
     this.renderAITab(aiAnalysis);
+    this.renderBindingsTab(bindings);
   }
 
   renderInspectorTab(details) {
@@ -220,6 +226,131 @@ class PanelUI {
           .map(
             ([k, v]) => `
           <div class="prop-row"><span class="prop-key">${k}</span><span class="prop-val">${v}</span></div>
+        `,
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  renderBindingsTab(bindingsData) {
+    const container = document.getElementById("bindings-container");
+    if (!bindingsData) {
+      container.innerHTML =
+        '<div class="empty-state">Select a control in the tree to inspect detailed bindings</div>';
+      return;
+    }
+
+    const { propertyBindings, aggregationBindings, controlId } = bindingsData;
+
+    let propsHtml = "";
+    if (propertyBindings && propertyBindings.length > 0) {
+      propsHtml = propertyBindings
+        .map(
+          (b) => `
+        <div class="binding-card">
+          <div class="binding-header">
+            <span class="binding-prop-name">Property: ${b.property}</span>
+            <button class="btn-why-empty" data-control-id="${controlId}" data-prop="${b.property}">❓ Why is this value empty?</button>
+          </div>
+          <div class="prop-row"><span class="prop-key">Model</span><span class="prop-val">${b.model}</span></div>
+          <div class="prop-row"><span class="prop-key">Path</span><span class="prop-val">${b.path}</span></div>
+          <div class="prop-row"><span class="prop-key">Value</span><span class="prop-val">"${b.value}"</span></div>
+          <div class="prop-row"><span class="prop-key">Type</span><span class="prop-val">${b.type}</span></div>
+          <div class="prop-row"><span class="prop-key">Binding</span><span class="prop-val">${b.binding}</span></div>
+          <div class="prop-row"><span class="prop-key">Mode</span><span class="prop-val">${b.mode}</span></div>
+          <div id="chain-result-${b.property}"></div>
+        </div>
+      `,
+        )
+        .join("");
+    } else {
+      propsHtml = '<div class="empty-state">No property bindings configured on this control.</div>';
+    }
+
+    let aggsHtml = "";
+    if (aggregationBindings && aggregationBindings.length > 0) {
+      aggsHtml = aggregationBindings
+        .map(
+          (a) => `
+        <div class="binding-card">
+          <div class="binding-header">
+            <span class="binding-prop-name">Aggregation: ${a.aggregation}</span>
+          </div>
+          <div class="prop-row"><span class="prop-key">Path</span><span class="prop-val">${a.path}</span></div>
+          <div class="prop-row"><span class="prop-key">Template</span><span class="prop-val">${a.template}</span></div>
+          <div class="prop-row"><span class="prop-key">Template Shareable</span><span class="prop-val">${a.templateShareable}</span></div>
+        </div>
+      `,
+        )
+        .join("");
+    } else {
+      aggsHtml = '<div class="empty-state">No aggregation bindings on this control.</div>';
+    }
+
+    container.innerHTML = `
+      <div class="details-section">
+        <h4>Property Bindings</h4>
+        ${propsHtml}
+      </div>
+
+      <div class="details-section">
+        <h4>Aggregation Bindings</h4>
+        ${aggsHtml}
+      </div>
+    `;
+
+    // Bind "Why is this value empty?" buttons
+    container.querySelectorAll(".btn-why-empty").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const cId = e.target.getAttribute("data-control-id");
+        const prop = e.target.getAttribute("data-prop");
+        this.runWhyEmptyDiagnosis(cId, prop);
+      });
+    });
+  }
+
+  runWhyEmptyDiagnosis(controlId, propertyName) {
+    if (this.isDevToolsEnv()) {
+      const expr = `
+        (function() {
+          if (window.__DEVFRAME_BINDINGS__) {
+            return window.__DEVFRAME_BINDINGS__.diagnoseWhyValueIsEmpty(${JSON.stringify(controlId)}, ${JSON.stringify(propertyName)});
+          }
+          return null;
+        })()
+      `;
+      chrome.devtools.inspectedWindow.eval(expr, (res, err) => {
+        if (!err && res) {
+          this.renderChainDiagnosisResult(propertyName, res);
+        } else {
+          const resLocal = this.localBindingInspector.diagnoseWhyValueIsEmpty(
+            controlId,
+            propertyName,
+          );
+          this.renderChainDiagnosisResult(propertyName, resLocal);
+        }
+      });
+    } else {
+      const res = this.localBindingInspector.diagnoseWhyValueIsEmpty(controlId, propertyName);
+      this.renderChainDiagnosisResult(propertyName, res);
+    }
+  }
+
+  renderChainDiagnosisResult(propertyName, result) {
+    const targetEl = document.getElementById(`chain-result-${propertyName}`);
+    if (!targetEl || !result || !result.chain) return;
+
+    targetEl.innerHTML = `
+      <div class="chain-walker">
+        <strong>Binding Chain Diagnostic Walk:</strong>
+        ${result.chain
+          .map(
+            (step) => `
+          <div class="chain-node ${step.status}">
+            <span>${step.icon}</span>
+            <span><strong>${step.step}:</strong> ${step.message}</span>
+          </div>
         `,
           )
           .join("")}
