@@ -3,11 +3,13 @@ import { UI5Hook } from "../backend/ui5-hook.js";
 import { ModelInspector } from "../backend/model-inspector.js";
 import { AIDebugger } from "../ai/ai-debugger.js";
 import { ODataInspector } from "../backend/odata-inspector.js";
+import { BindingInspector } from "../backend/binding-inspector.js";
 
 const hook = new UI5Hook(typeof window !== "undefined" ? window : globalThis);
 const inspector = new ModelInspector(hook);
 const aiDebugger = new AIDebugger(inspector);
 const odataInspector = new ODataInspector(hook);
+const bindingInspector = new BindingInspector(hook);
 
 // Hook network/OData requests
 hook.attachODataInterceptor((req) => {
@@ -37,13 +39,14 @@ if (typeof window !== "undefined") {
   window.__DEVFRAME_INSPECTOR__ = inspector;
   window.__DEVFRAME_AI__ = aiDebugger;
   window.__DEVFRAME_ODATA__ = odataInspector;
+  window.__DEVFRAME_BINDINGS__ = bindingInspector;
 
   window.addEventListener("message", (event) => {
     if (event.source !== window || !event.data || event.data.source !== "devframe-devtools") {
       return;
     }
 
-    const { action, controlId, requestId } = event.data;
+    const { action, controlId, propertyName, requestId } = event.data;
 
     if (action === "GET_TREE") {
       const tree = hook.getControlTree();
@@ -52,8 +55,15 @@ if (typeof window !== "undefined") {
     } else if (action === "GET_DETAILS" && controlId) {
       const details = inspector.inspectControlDetails(controlId);
       const diagnostics = aiDebugger.analyzeControl(details);
+      const bindings = bindingInspector.inspectBindings(controlId);
       window.postMessage(
-        { source: "devframe-content", action: "DETAILS_DATA", details, diagnostics },
+        { source: "devframe-content", action: "DETAILS_DATA", details, diagnostics, bindings },
+        "*",
+      );
+    } else if (action === "WHY_VALUE_EMPTY" && controlId) {
+      const diagnosis = bindingInspector.diagnoseWhyValueIsEmpty(controlId, propertyName || "text");
+      window.postMessage(
+        { source: "devframe-content", action: "WHY_VALUE_EMPTY_DATA", diagnosis },
         "*",
       );
     } else if (action === "GET_ODATA_REQUESTS") {
