@@ -5,7 +5,7 @@ chrome.runtime.onConnect.addListener((port) => {
   let tabId;
 
   port.onMessage.addListener((message) => {
-    if (message.name === 'init' && message.tabId) {
+    if (message.name === "init" && message.tabId) {
       tabId = message.tabId;
       ports[tabId] = port;
       return;

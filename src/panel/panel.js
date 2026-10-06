@@ -1,6 +1,6 @@
-import { UI5Hook } from '../backend/ui5-hook.js';
-import { ModelInspector } from '../backend/model-inspector.js';
-import { AIDebugger } from '../ai/ai-debugger.js';
+import { UI5Hook } from "../backend/ui5-hook.js";
+import { ModelInspector } from "../backend/model-inspector.js";
+import { AIDebugger } from "../ai/ai-debugger.js";
 
 class PanelUI {
   constructor() {
@@ -16,25 +16,25 @@ class PanelUI {
   }
 
   isDevToolsEnv() {
-    return typeof chrome !== 'undefined' && chrome.devtools && chrome.devtools.inspectedWindow;
+    return typeof chrome !== "undefined" && chrome.devtools && chrome.devtools.inspectedWindow;
   }
 
   initTabs() {
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    tabBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        tabBtns.forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
 
-        btn.classList.add('active');
-        const targetTab = btn.getAttribute('data-tab');
-        document.getElementById(targetTab).classList.add('active');
+        btn.classList.add("active");
+        const targetTab = btn.getAttribute("data-tab");
+        document.getElementById(targetTab).classList.add("active");
       });
     });
   }
 
   bindEvents() {
-    document.getElementById('btn-refresh').addEventListener('click', () => this.refresh());
+    document.getElementById("btn-refresh").addEventListener("click", () => this.refresh());
   }
 
   refresh() {
@@ -46,7 +46,7 @@ class PanelUI {
         })`,
         (result, isException) => {
           if (!isException && result) {
-            document.getElementById('ui5-version').textContent = result.version || 'Not Loaded';
+            document.getElementById("ui5-version").textContent = result.version || "Not Loaded";
             this.renderTree(result.tree || []);
             if (this.selectedControlId) {
               this.inspectControl(this.selectedControlId);
@@ -54,7 +54,7 @@ class PanelUI {
           } else {
             this.renderLocalFallback();
           }
-        }
+        },
       );
     } else {
       this.renderLocalFallback();
@@ -62,7 +62,7 @@ class PanelUI {
   }
 
   renderLocalFallback() {
-    const versionEl = document.getElementById('ui5-version');
+    const versionEl = document.getElementById("ui5-version");
     versionEl.textContent = this.localHook.getUI5Version();
 
     const treeData = this.localHook.getControlTree();
@@ -74,47 +74,47 @@ class PanelUI {
   }
 
   renderTree(treeNodes) {
-    const container = document.getElementById('tree-container');
-    container.innerHTML = '';
+    const container = document.getElementById("tree-container");
+    container.innerHTML = "";
 
     if (!treeNodes || treeNodes.length === 0) {
       container.innerHTML = '<div class="empty-state">No UI5 controls found on this page.</div>';
       return;
     }
 
-    const ul = document.createElement('div');
-    treeNodes.forEach(node => {
+    const ul = document.createElement("div");
+    treeNodes.forEach((node) => {
       ul.appendChild(this.createTreeNodeEl(node));
     });
     container.appendChild(ul);
   }
 
   createTreeNodeEl(node) {
-    const div = document.createElement('div');
-    div.className = 'tree-node';
+    const div = document.createElement("div");
+    div.className = "tree-node";
     if (this.selectedControlId === node.id) {
-      div.classList.add('selected');
+      div.classList.add("selected");
     }
 
-    const textLabel = node.text ? ` "${node.text}"` : '';
+    const textLabel = node.text ? ` "${node.text}"` : "";
     div.innerHTML = `
-      <span class="node-type">${node.type.split('.').pop()}</span>
+      <span class="node-type">${node.type.split(".").pop()}</span>
       <span class="node-text">${textLabel}</span>
       <div class="node-id">${node.id}</div>
     `;
 
-    div.addEventListener('click', (e) => {
+    div.addEventListener("click", (e) => {
       e.stopPropagation();
-      document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
-      div.classList.add('selected');
+      document.querySelectorAll(".tree-node").forEach((n) => n.classList.remove("selected"));
+      div.classList.add("selected");
       this.selectedControlId = node.id;
       this.inspectControl(node.id);
     });
 
     if (node.children && node.children.length > 0) {
-      const childrenContainer = document.createElement('div');
-      childrenContainer.style.marginLeft = '12px';
-      node.children.forEach(child => {
+      const childrenContainer = document.createElement("div");
+      childrenContainer.style.marginLeft = "12px";
+      node.children.forEach((child) => {
         childrenContainer.appendChild(this.createTreeNodeEl(child));
       });
       div.appendChild(childrenContainer);
@@ -159,21 +159,22 @@ class PanelUI {
   }
 
   renderInspectorTab(details) {
-    const container = document.getElementById('inspector-details');
+    const container = document.getElementById("inspector-details");
     if (!details) {
       container.innerHTML = '<div class="empty-state">Control details not available</div>';
       return;
     }
 
-    let handlersHtml = '';
+    let handlersHtml = "";
     if (details.eventHandlers && Object.keys(details.eventHandlers).length > 0) {
       for (const eventName in details.eventHandlers) {
-        details.eventHandlers[eventName].forEach(h => {
+        details.eventHandlers[eventName].forEach((h) => {
           handlersHtml += `<div class="prop-row"><span class="prop-key">${eventName}</span><span class="prop-val">${h.handlerString}</span></div>`;
         });
       }
     } else {
-      handlersHtml = '<div class="prop-row"><span class="prop-key">Listeners</span><span class="prop-val">None</span></div>';
+      handlersHtml =
+        '<div class="prop-row"><span class="prop-key">Listeners</span><span class="prop-val">None</span></div>';
     }
 
     container.innerHTML = `
@@ -181,8 +182,8 @@ class PanelUI {
         <h4>Overview</h4>
         <div class="prop-row"><span class="prop-key">ID</span><span class="prop-val">${details.id}</span></div>
         <div class="prop-row"><span class="prop-key">Type</span><span class="prop-val">${details.type}</span></div>
-        <div class="prop-row"><span class="prop-key">Parent</span><span class="prop-val">${details.parent ? details.parent.id : 'None'}</span></div>
-        <div class="prop-row"><span class="prop-key">Controller</span><span class="prop-val">${details.controller ? details.controller.name : 'None'}</span></div>
+        <div class="prop-row"><span class="prop-key">Parent</span><span class="prop-val">${details.parent ? details.parent.id : "None"}</span></div>
+        <div class="prop-row"><span class="prop-key">Controller</span><span class="prop-val">${details.controller ? details.controller.name : "None"}</span></div>
       </div>
 
       <div class="details-section">
@@ -198,21 +199,25 @@ class PanelUI {
 
       <div class="details-section">
         <h4>Properties</h4>
-        ${Object.entries(details.properties).map(([k, v]) => `
+        ${Object.entries(details.properties)
+          .map(
+            ([k, v]) => `
           <div class="prop-row"><span class="prop-key">${k}</span><span class="prop-val">${v}</span></div>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </div>
     `;
   }
 
   renderModelsTab(details) {
-    const container = document.getElementById('models-container');
+    const container = document.getElementById("models-container");
     if (!details) {
       container.innerHTML = '<div class="empty-state">No control selected</div>';
       return;
     }
 
-    let bindingsHtml = '';
+    let bindingsHtml = "";
     if (details.bindings && Object.keys(details.bindings).length > 0) {
       for (const propName in details.bindings) {
         const b = details.bindings[propName];
@@ -221,10 +226,11 @@ class PanelUI {
         `;
       }
     } else {
-      bindingsHtml = '<div class="prop-row"><span class="prop-key">Bindings</span><span class="prop-val">No direct property bindings</span></div>';
+      bindingsHtml =
+        '<div class="prop-row"><span class="prop-key">Bindings</span><span class="prop-val">No direct property bindings</span></div>';
     }
 
-    let contextHtml = 'None';
+    let contextHtml = "None";
     if (details.bindingContext) {
       contextHtml = `${details.bindingContext.odataVersion} Path: ${details.bindingContext.path}`;
     }
@@ -243,20 +249,23 @@ class PanelUI {
   }
 
   renderAITab(analysis) {
-    const container = document.getElementById('ai-container');
-    const badge = document.getElementById('ai-badge');
+    const container = document.getElementById("ai-container");
+    const badge = document.getElementById("ai-badge");
 
     badge.textContent = analysis.diagnostics.length;
 
     if (!analysis.diagnostics || analysis.diagnostics.length === 0) {
-      container.innerHTML = '<div class="empty-state">✨ No UI5 runtime issues detected for this control!</div>';
+      container.innerHTML =
+        '<div class="empty-state">✨ No UI5 runtime issues detected for this control!</div>';
       return;
     }
 
     container.innerHTML = `
       <div class="details-section">
         <h4>Control Health Score: ${analysis.score}/100</h4>
-        ${analysis.diagnostics.map(d => `
+        ${analysis.diagnostics
+          .map(
+            (d) => `
           <div class="card-diagnostic ${d.level}">
             <div class="diag-header">
               <span>[${d.category}] ${d.level.toUpperCase()}</span>
@@ -264,12 +273,14 @@ class PanelUI {
             <div>${d.message}</div>
             <div class="diag-fix">💡 Fix Suggestion: ${d.suggestion}</div>
           </div>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </div>
     `;
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   window.panelUI = new PanelUI();
 });
