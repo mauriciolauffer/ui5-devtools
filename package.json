@@ -1,0 +1,27 @@
+{
+  "name": "ui5-devtools",
+  "version": "1.0.0",
+  "description": "DevFrame DevTools for SAPUI5 - Advanced developer cockpit for SAPUI5 applications",
+  "main": "src/devtools/devtools.js",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mauriciolauffer/ui5-devtools.git"
+  },
+  "keywords": [
+    "sapui5",
+    "openui5",
+    "devtools",
+    "chrome-extension",
+    "fiori",
+    "fiori-elements"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^1.6.0"
+  }
+}
