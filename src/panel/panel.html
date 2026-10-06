@@ -15,6 +15,7 @@
         <nav class="tabs">
           <button class="tab-btn active" data-tab="tab-inspector">Control Inspector</button>
           <button class="tab-btn" data-tab="tab-models">Models & Context</button>
+          <button class="tab-btn" data-tab="tab-odata">OData Inspector</button>
           <button class="tab-btn" data-tab="tab-ai">
             AI Diagnostics <span id="ai-badge" class="badge-count">0</span>
           </button>
@@ -53,7 +54,28 @@
           </div>
         </section>
 
-        <!-- Tab 3: AI Diagnostics -->
+        <!-- Tab 3: OData Inspector -->
+        <section id="tab-odata" class="tab-content">
+          <div class="split-pane">
+            <div class="pane-left">
+              <h3>OData Requests History</h3>
+              <div id="odata-requests-container" class="tree-container">
+                <div class="empty-state">No OData requests recorded yet</div>
+              </div>
+            </div>
+            <div class="pane-right">
+              <h3>OData Request Inspector & Lifecycle Stages</h3>
+              <div id="odata-details-container" class="details-container">
+                <div class="empty-state">
+                  Select an OData request to inspect parameters, UI5 trace chain, and request
+                  lifecycle
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 4: AI Diagnostics -->
         <section id="tab-ai" class="tab-content">
           <div class="pane-full">
             <h3>AI Diagnostics & Fix Recommendations</h3>

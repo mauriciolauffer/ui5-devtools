@@ -1,14 +1,26 @@
 import { UI5Hook } from "../backend/ui5-hook.js";
 import { ModelInspector } from "../backend/model-inspector.js";
 import { AIDebugger } from "../ai/ai-debugger.js";
+import { ODataInspector } from "../backend/odata-inspector.js";
 
 class PanelUI {
   constructor() {
     this.localHook = new UI5Hook(window);
     this.localInspector = new ModelInspector(this.localHook);
     this.localAiDebugger = new AIDebugger(this.localInspector);
+    this.localODataInspector = new ODataInspector(this.localHook);
 
     this.selectedControlId = null;
+    this.selectedRequestId = null;
+
+    // Seed mock initial requests for standalone/test inspection
+    this.localODataInspector.recordRequest({
+      method: "GET",
+      url: "/sap/opu/odata4/sap/zui_products_v4/srvd/sap/zui_products/0001/Products?$select=ID,Name,Price&$filter=Status%20eq%20%27A%27&$expand=Category",
+      status: 200,
+      duration: 143,
+      controlId: "application::ObjectPage--fe::table::STTA_C_MP_Product::Table",
+    });
 
     this.initTabs();
     this.bindEvents();
@@ -42,12 +54,14 @@ class PanelUI {
       chrome.devtools.inspectedWindow.eval(
         `({
           version: (window.__DEVFRAME_HOOK__ ? window.__DEVFRAME_HOOK__.getUI5Version() : (window.sap && window.sap.ui && window.sap.ui.version) || 'Not Loaded'),
-          tree: (window.__DEVFRAME_HOOK__ ? window.__DEVFRAME_HOOK__.getControlTree() : [])
+          tree: (window.__DEVFRAME_HOOK__ ? window.__DEVFRAME_HOOK__.getControlTree() : []),
+          odataRequests: (window.__DEVFRAME_ODATA__ ? window.__DEVFRAME_ODATA__.getRequests() : [])
         })`,
         (result, isException) => {
           if (!isException && result) {
             document.getElementById("ui5-version").textContent = result.version || "Not Loaded";
             this.renderTree(result.tree || []);
+            this.renderODataRequests(result.odataRequests || []);
             if (this.selectedControlId) {
               this.inspectControl(this.selectedControlId);
             }
@@ -67,6 +81,9 @@ class PanelUI {
 
     const treeData = this.localHook.getControlTree();
     this.renderTree(treeData);
+
+    const odataRequests = this.localODataInspector.getRequests();
+    this.renderODataRequests(odataRequests);
 
     if (this.selectedControlId) {
       this.inspectControl(this.selectedControlId);
@@ -276,6 +293,112 @@ class PanelUI {
         `,
           )
           .join("")}
+      </div>
+    `;
+  }
+
+  renderODataRequests(requests) {
+    const container = document.getElementById("odata-requests-container");
+    container.innerHTML = "";
+
+    if (!requests || requests.length === 0) {
+      container.innerHTML = '<div class="empty-state">No OData requests recorded yet</div>';
+      return;
+    }
+
+    requests.forEach((req) => {
+      const el = document.createElement("div");
+      el.className = "odata-item";
+      if (this.selectedRequestId === req.id) el.classList.add("selected");
+
+      el.innerHTML = `
+        <div>
+          <span class="odata-method ${req.method}">${req.method}</span>
+          <strong>${req.entitySet}</strong> (${req.version})
+        </div>
+        <div class="odata-url">${req.url}</div>
+      `;
+
+      el.addEventListener("click", () => {
+        document.querySelectorAll(".odata-item").forEach((i) => i.classList.remove("selected"));
+        el.classList.add("selected");
+        this.selectedRequestId = req.id;
+        this.renderODataRequestDetails(req);
+      });
+
+      container.appendChild(el);
+    });
+
+    if (!this.selectedRequestId && requests[0]) {
+      this.selectedRequestId = requests[0].id;
+      this.renderODataRequestDetails(requests[0]);
+    }
+  }
+
+  renderODataRequestDetails(req) {
+    const container = document.getElementById("odata-details-container");
+    if (!req) {
+      container.innerHTML = '<div class="empty-state">Select an OData request to inspect</div>';
+      return;
+    }
+
+    const queryParamsHtml =
+      Object.keys(req.queryParams || {}).length > 0
+        ? Object.entries(req.queryParams)
+            .map(
+              ([k, v]) => `
+          <div class="prop-row"><span class="prop-key">${k}</span><span class="prop-val">${v}</span></div>
+        `,
+            )
+            .join("")
+        : '<div class="prop-row"><span class="prop-key">Query Params</span><span class="prop-val">None</span></div>';
+
+    const trace = req.trace || {};
+    const lifecycle = req.lifecycle || [];
+
+    container.innerHTML = `
+      <div class="details-section">
+        <h4>Request Summary</h4>
+        <div class="prop-row"><span class="prop-key">Method</span><span class="prop-val">${req.method}</span></div>
+        <div class="prop-row"><span class="prop-key">URL</span><span class="prop-val">${req.url}</span></div>
+        <div class="prop-row"><span class="prop-key">Status</span><span class="prop-val">${req.status} OK</span></div>
+        <div class="prop-row"><span class="prop-key">Duration</span><span class="prop-val">${req.duration} ms</span></div>
+      </div>
+
+      <div class="details-section">
+        <h4>OData System Query Options ($select, $filter, $expand)</h4>
+        ${queryParamsHtml}
+      </div>
+
+      <div class="details-section">
+        <h4>UI5 Control Connection Trace (Network Request → Control → View)</h4>
+        <div class="trace-flow">
+          <div class="trace-step">Network Request</div>
+          <span class="trace-arrow">↓</span>
+          <div class="trace-step">${trace.odataModel || "ODataModel"}</div>
+          <span class="trace-arrow">↓</span>
+          <div class="trace-step">${trace.bindingPath || "/EntitySet"}</div>
+          <span class="trace-arrow">↓</span>
+          <div class="trace-step">${trace.control || "Control"}</div>
+          <span class="trace-arrow">↓</span>
+          <div class="trace-step">${trace.view || "View"}</div>
+        </div>
+      </div>
+
+      <div class="details-section">
+        <h4>OData V4 Request Lifecycle Stages</h4>
+        <div class="lifecycle-container">
+          ${lifecycle
+            .map(
+              (stage) => `
+            <div class="lifecycle-node">
+              <div class="lifecycle-title">${stage.title}</div>
+              <div class="lifecycle-desc">${stage.description}</div>
+            </div>
+          `,
+            )
+            .join("")}
+        </div>
       </div>
     `;
   }

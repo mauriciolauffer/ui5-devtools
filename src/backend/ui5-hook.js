@@ -136,4 +136,33 @@ export class UI5Hook {
       children,
     };
   }
+
+  attachODataInterceptor(onRequestCallback) {
+    if (!this.window || typeof onRequestCallback !== "function") return;
+
+    // Intercept fetch API calls if present
+    if (this.window.fetch && !this.window.__DEVFRAME_FETCH_HOOKED__) {
+      const originalFetch = this.window.fetch;
+      this.window.__DEVFRAME_FETCH_HOOKED__ = true;
+
+      this.window.fetch = function (...args) {
+        const startTime = Date.now();
+        const url = typeof args[0] === "string" ? args[0] : args[0]?.url || "";
+        const method = (args[1]?.method || "GET").toUpperCase();
+
+        return originalFetch.apply(this, args).then((response) => {
+          if (url.includes("odata") || url.includes("/sap/opu/")) {
+            onRequestCallback({
+              method,
+              url,
+              status: response.status,
+              duration: Date.now() - startTime,
+              timestamp: new Date().toISOString(),
+            });
+          }
+          return response;
+        });
+      };
+    }
+  }
 }
