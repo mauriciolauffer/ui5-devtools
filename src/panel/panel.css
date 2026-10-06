@@ -272,3 +272,97 @@ h3 {
   margin-top: 4px;
   font-family: monospace;
 }
+
+/* OData Inspector Specific Styles */
+.odata-item {
+  padding: 8px;
+  margin-bottom: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.odata-item:hover,
+.odata-item.selected {
+  border-color: var(--accent-color);
+  background: #313244;
+}
+
+.odata-method {
+  font-weight: bold;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-right: 6px;
+  color: #11111b;
+}
+
+.odata-method.GET {
+  background: var(--accent-color);
+}
+.odata-method.POST {
+  background: var(--success-color);
+}
+.odata-method.PATCH,
+.odata-method.PUT {
+  background: var(--warning-color);
+}
+.odata-method.DELETE {
+  background: var(--error-color);
+}
+
+.odata-url {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-color);
+  word-break: break-all;
+}
+
+.trace-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+
+.trace-step {
+  background: #313244;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.trace-arrow {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.lifecycle-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.lifecycle-node {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1e1e2e;
+  border-left: 3px solid var(--accent-color);
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.lifecycle-title {
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+.lifecycle-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
