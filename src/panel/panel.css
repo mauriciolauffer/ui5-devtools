@@ -9,7 +9,8 @@
   --warning-color: #f9e2af;
   --error-color: #f38ba8;
   --success-color: #a6e3a1;
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 * {
@@ -141,7 +142,8 @@ body {
   flex-direction: column;
 }
 
-.pane-right, .pane-full {
+.pane-right,
+.pane-full {
   flex: 1;
   display: flex;
   flex-direction: column;

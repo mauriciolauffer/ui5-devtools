@@ -4,8 +4,8 @@ if (chrome && chrome.devtools) {
     "DevFrame UI5",
     "icons/icon16.png",
     "src/panel/panel.html",
-    function(panel) {
+    function (_panel) {
       console.log("DevFrame UI5 DevTools panel created successfully.");
-    }
+    },
   );
 }
