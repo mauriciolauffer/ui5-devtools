@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DevFrame UI5 App Mock</title>
+  <script>
+    // Mock minimal SAPUI5 global objects
+    window.sap = {
+      ui: {
+        version: "1.120.0",
+        getCore: function() {
+          return {
+            byId: function(id) {
+              return window.sap.ui.core.ElementRegistry.get(id);
+            }
+          };
+        },
+        core: {
+          ElementRegistry: {
+            get: function(id) {
+              return window.ui5Controls[id];
+            },
+            all: function() {
+              return Object.values(window.ui5Controls);
+            }
+          }
+        }
+      }
+    };
+
+    window.ui5Controls = {
+      "application::ObjectPage--fe::table::STTA_C_MP_Product::Save": {
+        getId: () => "application::ObjectPage--fe::table::STTA_C_MP_Product::Save",
+        getMetadata: () => ({
+          getName: () => "sap.m.Button",
+          getAllProperties: () => ({ text: {}, enabled: {}, visible: {} }),
+          getAllAggregations: () => ({})
+        }),
+        getText: () => "Save",
+        getEnabled: () => true,
+        getVisible: () => true,
+        getParent: () => null,
+        getModel: () => ({ getMetadata: () => ({ getName: () => "sap.ui.model.odata.v4.ODataModel" }) }),
+        getBindingContext: () => ({
+          getPath: () => "/Product('1024')",
+          getModel: () => ({ getMetadata: () => ({ getName: () => "sap.ui.model.odata.v4.ODataModel" }) }),
+          getObject: () => ({ ID: '1024', Name: 'DevFrame UI5 Smart Cockpit' })
+        }),
+        mBindingInfos: {
+          text: { model: "i18n", path: "SAVE_BTN" }
+        },
+        mEventRegistry: {
+          press: [{ fFunction: function onSave() {}, oListener: {} }]
+        }
+      }
+    };
+  </script>
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+  <h2>SAPUI5 Fiori Elements ObjectPage App</h2>
+  <button id="btn-mock">Save Product</button>
+</body>
+</html>
