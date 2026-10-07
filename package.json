@@ -29,7 +29,7 @@
     "fmt": "oxfmt"
   },
   "devDependencies": {
-    "devframe": "^1.2.2",
+    "devframe": "^1.2.3",
     "esbuild": "^0.28.2",
     "oxfmt": "^0.72.0",
     "oxlint": "^1.87.0",
