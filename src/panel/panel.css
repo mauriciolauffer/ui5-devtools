@@ -40,7 +40,8 @@ body {
   background-color: var(--panel-bg);
   border-bottom: 1px solid var(--border-color);
   padding: 8px 16px;
-  gap: 16px;
+  gap: 12px;
+  overflow-x: auto;
 }
 
 .logo {
@@ -50,6 +51,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .badge {
@@ -72,22 +74,25 @@ body {
 .ui5-info {
   color: var(--text-muted);
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .tabs {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   margin-left: auto;
+  overflow-x: auto;
 }
 
 .tab-btn {
   background: none;
   border: 1px solid transparent;
   color: var(--text-muted);
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .tab-btn:hover {
@@ -105,10 +110,11 @@ body {
   background: var(--accent-color);
   color: #11111b;
   border: none;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .btn-refresh:hover {
@@ -431,4 +437,39 @@ h3 {
 .chain-node.error {
   color: var(--error-color);
   font-weight: bold;
+}
+
+/* Health Cockpit & Score Styles */
+.health-score-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #11111b;
+  border: 1px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.health-number {
+  font-size: 48px;
+  font-weight: bold;
+  color: var(--success-color);
+}
+
+.health-label {
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.code-block {
+  background: #11111b;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  color: var(--success-color);
+  margin-top: 4px;
 }

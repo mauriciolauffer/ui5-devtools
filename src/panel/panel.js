@@ -3,6 +3,12 @@ import { ModelInspector } from "../backend/model-inspector.js";
 import { AIDebugger } from "../ai/ai-debugger.js";
 import { ODataInspector } from "../backend/odata-inspector.js";
 import { BindingInspector } from "../backend/binding-inspector.js";
+import { RoutingInspector } from "../backend/routing-inspector.js";
+import { FioriInspector } from "../backend/fiori-inspector.js";
+import { PerformanceProfiler } from "../backend/performance-profiler.js";
+import { A11yI18nInspector } from "../backend/a11y-i18n-inspector.js";
+import { TestGenerator } from "../testing/test-generator.js";
+import { HealthCockpit } from "../backend/health-cockpit.js";
 
 class PanelUI {
   constructor() {
@@ -11,6 +17,12 @@ class PanelUI {
     this.localAiDebugger = new AIDebugger(this.localInspector);
     this.localODataInspector = new ODataInspector(this.localHook);
     this.localBindingInspector = new BindingInspector(this.localHook);
+    this.localRoutingInspector = new RoutingInspector(this.localHook);
+    this.localFioriInspector = new FioriInspector(this.localHook);
+    this.localPerfProfiler = new PerformanceProfiler(this.localHook);
+    this.localA11yInspector = new A11yI18nInspector(this.localHook);
+    this.localTestGenerator = new TestGenerator(this.localHook);
+    this.localHealthCockpit = new HealthCockpit(this.localHook);
 
     this.selectedControlId = null;
     this.selectedRequestId = null;
@@ -42,13 +54,13 @@ class PanelUI {
 
         btn.classList.add("active");
         const targetTab = btn.getAttribute("data-tab");
-        document.getElementById(targetTab).classList.add("active");
+        document.getElementById(targetTab)?.classList.add("active");
       });
     });
   }
 
   bindEvents() {
-    document.getElementById("btn-refresh").addEventListener("click", () => this.refresh());
+    document.getElementById("btn-refresh")?.addEventListener("click", () => this.refresh());
   }
 
   refresh() {
@@ -61,9 +73,11 @@ class PanelUI {
         })`,
         (result, isException) => {
           if (!isException && result) {
-            document.getElementById("ui5-version").textContent = result.version || "Not Loaded";
+            const versionEl = document.getElementById("ui5-version");
+            if (versionEl) versionEl.textContent = result.version || "Not Loaded";
             this.renderTree(result.tree || []);
             this.renderODataRequests(result.odataRequests || []);
+            this.renderStaticTabs();
             if (this.selectedControlId) {
               this.inspectControl(this.selectedControlId);
             }
@@ -79,7 +93,7 @@ class PanelUI {
 
   renderLocalFallback() {
     const versionEl = document.getElementById("ui5-version");
-    versionEl.textContent = this.localHook.getUI5Version();
+    if (versionEl) versionEl.textContent = this.localHook.getUI5Version();
 
     const treeData = this.localHook.getControlTree();
     this.renderTree(treeData);
@@ -87,13 +101,33 @@ class PanelUI {
     const odataRequests = this.localODataInspector.getRequests();
     this.renderODataRequests(odataRequests);
 
+    this.renderStaticTabs();
+
     if (this.selectedControlId) {
       this.inspectControl(this.selectedControlId);
     }
   }
 
+  renderStaticTabs() {
+    this.renderRoutingTab(this.localRoutingInspector.inspectRouting());
+    this.renderFioriTab(this.localFioriInspector.inspectFioriElements());
+    this.renderPerfTab(this.localPerfProfiler.getPerformanceMetrics());
+    this.renderA11yTab(
+      this.localA11yInspector.inspectAccessibility(),
+      this.localA11yInspector.inspectI18n(),
+      this.localA11yInspector.inspectTheme(),
+      this.localA11yInspector.getAggregatedMessages(),
+    );
+    this.renderTestingTab(
+      this.localTestGenerator.generateSelectors("application-product-save"),
+      this.localTestGenerator.generateAutomatedTestSpec(),
+    );
+    this.renderHealthTab(this.localHealthCockpit.getOverallHealthScore());
+  }
+
   renderTree(treeNodes) {
     const container = document.getElementById("tree-container");
+    if (!container) return;
     container.innerHTML = "";
 
     if (!treeNodes || treeNodes.length === 0) {
@@ -183,6 +217,7 @@ class PanelUI {
 
   renderInspectorTab(details) {
     const container = document.getElementById("inspector-details");
+    if (!container) return;
     if (!details) {
       container.innerHTML = '<div class="empty-state">Control details not available</div>';
       return;
@@ -235,6 +270,7 @@ class PanelUI {
 
   renderBindingsTab(bindingsData) {
     const container = document.getElementById("bindings-container");
+    if (!container) return;
     if (!bindingsData) {
       container.innerHTML =
         '<div class="empty-state">Select a control in the tree to inspect detailed bindings</div>';
@@ -358,8 +394,250 @@ class PanelUI {
     `;
   }
 
+  renderRoutingTab(routing) {
+    const container = document.getElementById("routing-container");
+    if (!container || !routing) return;
+
+    container.innerHTML = `
+      <div class="details-section">
+        <h4>Router Active Status</h4>
+        <div class="prop-row"><span class="prop-key">Current Route</span><span class="prop-val">${routing.currentRoute}</span></div>
+        <div class="prop-row"><span class="prop-key">Hash</span><span class="prop-val">${routing.hash}</span></div>
+        <div class="prop-row"><span class="prop-key">Matched Arguments</span><span class="prop-val">${JSON.stringify(routing.matchedArgs)}</span></div>
+      </div>
+
+      <div class="details-section">
+        <h4>Registered Routes</h4>
+        ${routing.routes
+          .map(
+            (r) => `
+          <div class="prop-row"><span class="prop-key">${r.name} (${r.pattern})</span><span class="prop-val">${r.view} → ${r.controller}</span></div>
+        `,
+          )
+          .join("")}
+      </div>
+
+      <div class="details-section">
+        <h4>Routing Diagnostics</h4>
+        ${routing.diagnostics
+          .map(
+            (d) => `
+          <div class="card-diagnostic ${d.level}">
+            <div>${d.message}</div>
+            <div class="diag-fix">💡 Fix: ${d.suggestion}</div>
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  renderFioriTab(fiori) {
+    const container = document.getElementById("fiori-container");
+    if (!container || !fiori) return;
+
+    container.innerHTML = `
+      <div class="details-section">
+        <h4>Fiori Elements Floorplan</h4>
+        <div class="prop-row"><span class="prop-key">Page Type</span><span class="prop-val">${fiori.pageType}</span></div>
+        <div class="prop-row"><span class="prop-key">Target Entity</span><span class="prop-val">${fiori.entity}</span></div>
+      </div>
+
+      <div class="details-section">
+        <h4>Sections & Facets</h4>
+        ${fiori.sections
+          .map(
+            (s) => `
+          <div class="prop-row"><span class="prop-key">${s.name}</span><span class="prop-val">ID: ${s.id}</span></div>
+        `,
+          )
+          .join("")}
+      </div>
+
+      <div class="details-section">
+        <h4>OData Annotations</h4>
+        ${fiori.annotations
+          .map(
+            (a) => `
+          <div class="prop-row"><span class="prop-key">${a.term} (${a.type})</span><span class="prop-val">Target: ${a.target}</span></div>
+        `,
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  renderPerfTab(perf) {
+    const container = document.getElementById("perf-container");
+    if (!container || !perf) return;
+
+    container.innerHTML = `
+      <div class="details-section">
+        <h4>Startup Timings</h4>
+        <div class="prop-row"><span class="prop-key">Bootstrap</span><span class="prop-val">${perf.startup.bootstrap} ms</span></div>
+        <div class="prop-row"><span class="prop-key">Component</span><span class="prop-val">${perf.startup.component} ms</span></div>
+        <div class="prop-row"><span class="prop-key">Libraries</span><span class="prop-val">${perf.startup.libraries} ms</span></div>
+        <div class="prop-row"><span class="prop-key">Initial Rendering</span><span class="prop-val">${perf.startup.initialRendering} ms</span></div>
+        <div class="prop-row"><span class="prop-key">Total Time</span><span class="prop-val">${perf.startup.total} ms</span></div>
+      </div>
+
+      <div class="details-section">
+        <h4>Rendering & Controls Lifecycle</h4>
+        <div class="prop-row"><span class="prop-key">Controls Created</span><span class="prop-val">${perf.rendering.controlsCreated}</span></div>
+        <div class="prop-row"><span class="prop-key">Controls Destroyed</span><span class="prop-val">${perf.rendering.controlsDestroyed}</span></div>
+        <div class="prop-row"><span class="prop-key">Render Cycles</span><span class="prop-val">${perf.rendering.renderCycles}</span></div>
+        <div class="prop-row"><span class="prop-key">Longest Render</span><span class="prop-val">${perf.rendering.longestRender.control} (${perf.rendering.longestRender.duration} ms)</span></div>
+      </div>
+
+      <div class="details-section">
+        <h4>Memory & Listener Diagnostics</h4>
+        ${perf.memoryDiagnostics
+          .map(
+            (m) => `
+          <div class="card-diagnostic ${m.level}">
+            <div>[${m.category}] ${m.message}</div>
+            <div class="diag-fix">💡 Fix: ${m.suggestion}</div>
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  renderA11yTab(a11y, i18n, theme, messages) {
+    const container = document.getElementById("a11y-container");
+    if (!container) return;
+    container.innerHTML = `
+      <div class="details-section">
+        <h4>Accessibility (ARIA) Audit</h4>
+        <div class="prop-row"><span class="prop-key">Accessible Name</span><span class="prop-val">${a11y.accessibleName}</span></div>
+        <div class="prop-row"><span class="prop-key">Role</span><span class="prop-val">${a11y.role}</span></div>
+        <div class="prop-row"><span class="prop-key">Contrast Ratio</span><span class="prop-val">${a11y.contrastRatio}</span></div>
+        ${a11y.diagnostics.map((d) => `<div class="card-diagnostic ${d.level}">[${d.category}] ${d.message}</div>`).join("")}
+      </div>
+
+      <div class="details-section">
+        <h4>i18n Bundle Inspector</h4>
+        <div class="prop-row"><span class="prop-key">Text</span><span class="prop-val">"${i18n.selectedText}"</span></div>
+        <div class="prop-row"><span class="prop-key">Key</span><span class="prop-val">${i18n.key}</span></div>
+        <div class="prop-row"><span class="prop-key">Hardcoded Suggestion</span><span class="prop-val">${i18n.hardcodedCheck.suggestion}</span></div>
+      </div>
+
+      <div class="details-section">
+        <h4>UI5 Theme & Design Tokens</h4>
+        <div class="prop-row"><span class="prop-key">Theme</span><span class="prop-val">${theme.theme}</span></div>
+        <div class="prop-row"><span class="prop-key">Background Token</span><span class="prop-val">${theme.designTokens.Background}</span></div>
+      </div>
+
+      <div class="details-section">
+        <h4>Aggregated Messages & Logs</h4>
+        ${messages
+          .map(
+            (m) => `
+          <div class="prop-row"><span class="prop-key">[${m.type}] ${m.source}</span><span class="prop-val">${m.message}</span></div>
+        `,
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  renderTestingTab(testGen, spec) {
+    const container = document.getElementById("testing-container");
+    if (!container) return;
+    container.innerHTML = `
+      <div class="details-section">
+        <h4>Selector Quality Score: ${testGen.qualityStars} (${testGen.qualityScore}/5)</h4>
+        ${testGen.checks.map((c) => `<div>${c}</div>`).join("")}
+      </div>
+
+      <div class="details-section">
+        <h4>Generated Selectors</h4>
+        <div class="prop-row"><span class="prop-key">wdi5</span><span class="prop-val">${testGen.selectors.wdi5}</span></div>
+        <div class="prop-row"><span class="prop-key">OPA5</span><span class="prop-val">${testGen.selectors.opa5}</span></div>
+        <div class="prop-row"><span class="prop-key">Playwright</span><span class="prop-val">${testGen.selectors.playwright}</span></div>
+        <div class="prop-row"><span class="prop-key">ARIA</span><span class="prop-val">${testGen.selectors.aria}</span></div>
+      </div>
+
+      <div class="details-section">
+        <h4>Generated Test Spec Code</h4>
+        <pre class="code-block">${spec}</pre>
+      </div>
+    `;
+  }
+
+  renderHealthTab(health) {
+    const container = document.getElementById("health-container");
+    if (!container) return;
+    container.innerHTML = `
+      <div class="health-score-card">
+        <div>
+          <div class="health-number">${health.overall} / 100</div>
+          <div class="health-label">UI5 Application Health Score</div>
+        </div>
+      </div>
+
+      <div class="details-section">
+        <h4>Subsystem Scores</h4>
+        ${Object.entries(health.scores)
+          .map(
+            ([k, v]) => `
+          <div class="prop-row"><span class="prop-key">${k.toUpperCase()}</span><span class="prop-val">${v} / 100</span></div>
+        `,
+          )
+          .join("")}
+      </div>
+
+      <div class="details-section">
+        <h4>Unified "Why?" Diagnostic Questions</h4>
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <button class="btn-refresh" id="btn-why-table">Why is my table empty?</button>
+          <button class="btn-refresh" id="btn-why-fragment">Why isn't my fragment showing?</button>
+          <button class="btn-why-empty" id="btn-why-route">Why doesn't my route work?</button>
+        </div>
+        <div id="health-why-result"></div>
+      </div>
+    `;
+
+    document
+      .getElementById("btn-why-table")
+      ?.addEventListener("click", () => this.runWhyQuestion("why_table_empty"));
+    document
+      .getElementById("btn-why-fragment")
+      ?.addEventListener("click", () => this.runWhyQuestion("why_fragment_not_showing"));
+    document
+      .getElementById("btn-why-route")
+      ?.addEventListener("click", () => this.runWhyQuestion("why_route_not_working"));
+  }
+
+  runWhyQuestion(questionType) {
+    const res = this.localHealthCockpit.diagnoseWhyQuestion(questionType);
+    const targetEl = document.getElementById("health-why-result");
+    if (!targetEl || !res) return;
+
+    targetEl.innerHTML = `
+      <div class="chain-walker">
+        <strong>${res.question}</strong>
+        <div style="margin: 6px 0; color: var(--warning-color);">Reason: ${res.reason}</div>
+        ${res.chain
+          .map(
+            (c) => `
+          <div class="chain-node ${c.status}">
+            <span>${c.icon}</span>
+            <span><strong>${c.step}:</strong> ${c.detail}</span>
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
   renderModelsTab(details) {
     const container = document.getElementById("models-container");
+    if (!container) return;
     if (!details) {
       container.innerHTML = '<div class="empty-state">No control selected</div>';
       return;
@@ -400,7 +678,8 @@ class PanelUI {
     const container = document.getElementById("ai-container");
     const badge = document.getElementById("ai-badge");
 
-    badge.textContent = analysis.diagnostics.length;
+    if (badge) badge.textContent = analysis.diagnostics.length;
+    if (!container) return;
 
     if (!analysis.diagnostics || analysis.diagnostics.length === 0) {
       container.innerHTML =
@@ -430,6 +709,7 @@ class PanelUI {
 
   renderODataRequests(requests) {
     const container = document.getElementById("odata-requests-container");
+    if (!container) return;
     container.innerHTML = "";
 
     if (!requests || requests.length === 0) {
@@ -468,6 +748,7 @@ class PanelUI {
 
   renderODataRequestDetails(req) {
     const container = document.getElementById("odata-details-container");
+    if (!container) return;
     if (!req) {
       container.innerHTML = '<div class="empty-state">Select an OData request to inspect</div>';
       return;

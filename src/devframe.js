@@ -4,6 +4,12 @@ import { ModelInspector } from "./backend/model-inspector.js";
 import { AIDebugger } from "./ai/ai-debugger.js";
 import { ODataInspector } from "./backend/odata-inspector.js";
 import { BindingInspector } from "./backend/binding-inspector.js";
+import { RoutingInspector } from "./backend/routing-inspector.js";
+import { FioriInspector } from "./backend/fiori-inspector.js";
+import { PerformanceProfiler } from "./backend/performance-profiler.js";
+import { A11yI18nInspector } from "./backend/a11y-i18n-inspector.js";
+import { TestGenerator } from "./testing/test-generator.js";
+import { HealthCockpit } from "./backend/health-cockpit.js";
 
 export const ui5Devframe = defineDevframe({
   id: "ui5-devtools",
@@ -11,7 +17,7 @@ export const ui5Devframe = defineDevframe({
   version: "1.0.0",
   packageName: "ui5-devtools",
   description:
-    "DevFrame DevTools for SAPUI5 - Advanced developer cockpit with AI diagnostics, OData inspector, and Binding inspector",
+    "DevFrame DevTools for SAPUI5 - Complete application debugging, analysis, and development cockpit",
   icon: "ph:gauge-duotone",
   clientAssets: "./dist",
   setup(ctx) {
@@ -22,6 +28,12 @@ export const ui5Devframe = defineDevframe({
     const aiDebugger = new AIDebugger(modelInspector);
     const odataInspector = new ODataInspector(hook);
     const bindingInspector = new BindingInspector(hook);
+    const routingInspector = new RoutingInspector(hook);
+    const fioriInspector = new FioriInspector(hook);
+    const performanceProfiler = new PerformanceProfiler(hook);
+    const a11yI18nInspector = new A11yI18nInspector(hook);
+    const testGenerator = new TestGenerator(hook);
+    const healthCockpit = new HealthCockpit(hook);
 
     scope.rpc.register(
       defineRpcFunction({
@@ -65,9 +77,78 @@ export const ui5Devframe = defineDevframe({
         name: "getODataRequests",
         type: "query",
         jsonSerializable: true,
-        handler: () => {
-          return odataInspector.getRequests();
-        },
+        handler: () => odataInspector.getRequests(),
+      }),
+    );
+
+    scope.rpc.register(
+      defineRpcFunction({
+        name: "getRoutingInfo",
+        type: "query",
+        jsonSerializable: true,
+        handler: () => routingInspector.inspectRouting(),
+      }),
+    );
+
+    scope.rpc.register(
+      defineRpcFunction({
+        name: "getFioriInfo",
+        type: "query",
+        jsonSerializable: true,
+        handler: (controlId) => fioriInspector.inspectFioriElements(controlId),
+      }),
+    );
+
+    scope.rpc.register(
+      defineRpcFunction({
+        name: "getPerformanceMetrics",
+        type: "query",
+        jsonSerializable: true,
+        handler: () => performanceProfiler.getPerformanceMetrics(),
+      }),
+    );
+
+    scope.rpc.register(
+      defineRpcFunction({
+        name: "getA11yAndI18nInfo",
+        type: "query",
+        jsonSerializable: true,
+        handler: (controlId) => ({
+          a11y: a11yI18nInspector.inspectAccessibility(controlId),
+          i18n: a11yI18nInspector.inspectI18n("Save Product"),
+          theme: a11yI18nInspector.inspectTheme(),
+          messages: a11yI18nInspector.getAggregatedMessages(),
+        }),
+      }),
+    );
+
+    scope.rpc.register(
+      defineRpcFunction({
+        name: "getTestSelectors",
+        type: "query",
+        jsonSerializable: true,
+        handler: (controlId) => ({
+          selectors: testGenerator.generateSelectors(controlId),
+          spec: testGenerator.generateAutomatedTestSpec(),
+        }),
+      }),
+    );
+
+    scope.rpc.register(
+      defineRpcFunction({
+        name: "getHealthCockpit",
+        type: "query",
+        jsonSerializable: true,
+        handler: () => healthCockpit.getOverallHealthScore(),
+      }),
+    );
+
+    scope.rpc.register(
+      defineRpcFunction({
+        name: "diagnoseWhyQuestion",
+        type: "action",
+        jsonSerializable: true,
+        handler: (questionType) => healthCockpit.diagnoseWhyQuestion(questionType),
       }),
     );
   },

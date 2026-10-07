@@ -13,15 +13,21 @@
         </div>
         <div class="ui5-info">UI5 Version: <span id="ui5-version">Detecting...</span></div>
         <nav class="tabs">
-          <button class="tab-btn active" data-tab="tab-inspector">Control Inspector</button>
-          <button class="tab-btn" data-tab="tab-bindings">Binding Inspector</button>
-          <button class="tab-btn" data-tab="tab-models">Models & Context</button>
-          <button class="tab-btn" data-tab="tab-odata">OData Inspector</button>
+          <button class="tab-btn active" data-tab="tab-inspector">Controls</button>
+          <button class="tab-btn" data-tab="tab-bindings">Bindings</button>
+          <button class="tab-btn" data-tab="tab-models">Models</button>
+          <button class="tab-btn" data-tab="tab-odata">OData</button>
+          <button class="tab-btn" data-tab="tab-routing">Routing</button>
+          <button class="tab-btn" data-tab="tab-fiori">Fiori & Annotations</button>
+          <button class="tab-btn" data-tab="tab-perf">Performance</button>
+          <button class="tab-btn" data-tab="tab-a11y">A11y & i18n</button>
+          <button class="tab-btn" data-tab="tab-testing">Test Generator</button>
+          <button class="tab-btn" data-tab="tab-health">Health Score</button>
           <button class="tab-btn" data-tab="tab-ai">
-            AI Diagnostics <span id="ai-badge" class="badge-count">0</span>
+            AI <span id="ai-badge" class="badge-count">0</span>
           </button>
         </nav>
-        <button id="btn-refresh" class="btn-refresh">🔄 Refresh Tree</button>
+        <button id="btn-refresh" class="btn-refresh">🔄 Refresh</button>
       </header>
 
       <main class="main-container">
@@ -88,7 +94,69 @@
           </div>
         </section>
 
-        <!-- Tab 5: AI Diagnostics -->
+        <!-- Tab 5: Routing Inspector -->
+        <section id="tab-routing" class="tab-content">
+          <div class="pane-full">
+            <h3>UI5 Router & Views Inspector</h3>
+            <div id="routing-container" class="details-container">
+              <div class="empty-state">Loading router configuration...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 6: Fiori Elements & Annotation Inspector -->
+        <section id="tab-fiori" class="tab-content">
+          <div class="pane-full">
+            <h3>Fiori Elements & Annotation Inspector</h3>
+            <div id="fiori-container" class="details-container">
+              <div class="empty-state">Select a control or view Fiori Elements annotations</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 7: Performance & Memory Profiler -->
+        <section id="tab-perf" class="tab-content">
+          <div class="pane-full">
+            <h3>Performance, Render Cycles & Memory Profiler</h3>
+            <div id="perf-container" class="details-container">
+              <div class="empty-state">Loading performance metrics...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 8: Accessibility, i18n & Messages -->
+        <section id="tab-a11y" class="tab-content">
+          <div class="pane-full">
+            <h3>Accessibility, i18n Bundles, Theme & Messages</h3>
+            <div id="a11y-container" class="details-container">
+              <div class="empty-state">Loading accessibility and i18n audit...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 9: Test Selector Generator & Interaction Recorder -->
+        <section id="tab-testing" class="tab-content">
+          <div class="pane-full">
+            <h3>Test Selector Generator & Interaction Recorder</h3>
+            <div id="testing-container" class="details-container">
+              <div class="empty-state">
+                Select a control to generate wdi5, OPA5, Playwright specs
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 10: Health Cockpit -->
+        <section id="tab-health" class="tab-content">
+          <div class="pane-full">
+            <h3>UI5 Application Health Score Dashboard & Unified "Why?" Engine</h3>
+            <div id="health-container" class="details-container">
+              <div class="empty-state">Calculating health score...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 11: AI Diagnostics -->
         <section id="tab-ai" class="tab-content">
           <div class="pane-full">
             <h3>AI Diagnostics & Fix Recommendations</h3>

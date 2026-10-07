@@ -21,12 +21,19 @@ describe("Devframe Definition & RPC Unit Tests", () => {
 
     ui5Devframe.setup(mockCtx);
 
-    expect(registeredRpc).toHaveLength(4);
+    expect(registeredRpc).toHaveLength(11);
     const names = registeredRpc.map((r) => r.name);
     expect(names).toContain("getControlTree");
     expect(names).toContain("getControlDetails");
     expect(names).toContain("whyValueEmpty");
     expect(names).toContain("getODataRequests");
+    expect(names).toContain("getRoutingInfo");
+    expect(names).toContain("getFioriInfo");
+    expect(names).toContain("getPerformanceMetrics");
+    expect(names).toContain("getA11yAndI18nInfo");
+    expect(names).toContain("getTestSelectors");
+    expect(names).toContain("getHealthCockpit");
+    expect(names).toContain("diagnoseWhyQuestion");
   });
 
   it("executes whyValueEmpty RPC handler cleanly", () => {
